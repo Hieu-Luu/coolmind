@@ -52,4 +52,4 @@ def serve_static(path):
 
 
 if __name__ == "__main__":
-    app.run(port=int(os.environ.get('PORT', 8081)))
+    app.run(debug=True, port=int(os.environ.get('PORT', 8082)))
