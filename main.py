@@ -4,7 +4,8 @@ import socket
 
 from langchain_core.messages import HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
-from flask import Flask, jsonify, request, send_file, send_from_directory
+from flask import Flask, jsonify, request, send_file, send_from_directory, render_template
+from flask_socketio import SocketIO
 from dotenv import load_dotenv
 
 # 🔥 FILL THIS OUT FIRST! 🔥
@@ -14,10 +15,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+socketio = SocketIO(app)
 
 @app.route("/")
 def index():
     return send_file('web/index.html')
+
+@app.route("/websocket")
+def websocket():
+    return render_template("index.html")
 
 @app.route("/flasktest/get")
 def flask_get_test():
@@ -84,6 +90,19 @@ def gemini_generate_content(model):
 def serve_static(path):
     return send_from_directory('web', path)
 
+@socketio.on('connect')
+def on_connect():
+    print('Client connected')
+
+@socketio.on('message')
+def on_message(data):
+    print('Received message:', data)
+    socketio.emit('response', 'Server received your message: ' + data)
+
+@socketio.on('disconnect')
+def on_disconnect():
+    print('Client disconnected')
+
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -97,3 +116,4 @@ def get_local_ip():
 
 if __name__ == "__main__":
     app.run(debug=True, host=get_local_ip(),  port=int(os.environ.get('PORT', 8082)))
+    socketio.run(app, debug=True)
